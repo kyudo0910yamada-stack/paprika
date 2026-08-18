@@ -1,3 +1,50 @@
-# Query: 
-# ContextLines: 1
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>paprika</title>
+  <style>
+    /* 画面全体の設定 */
+    body {
+      background-color: #E60012; /* パプリカっぽい赤色 */
+      color: white;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      height: 100vh; /* 画面の高さいっぱいに */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden; /* スクロールバーを隠す */
+    }
 
+    /* Coming Soonの文字の設定 */
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 0.2em; /* 文字の間隔を少し広げる */
+      margin-bottom: 10px;
+      animation: fadeIn 2s ease-in-out; /* ふわっと表示されるアニメーション */
+    }
+
+    p {
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      opacity: 0.8;
+      animation: fadeIn 3s ease-in-out;
+    }
+
+    /* アニメーションの設計図 */
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>COMING SOON</h1>
+  <p>paprika</p>
+
+</body>
+</html>
