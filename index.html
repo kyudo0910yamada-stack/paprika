@@ -9,11 +9,6 @@
 <style>
   /* =========================================================
      Font face
-     本文: 毎日新聞明朝ProN（A P-OTF 毎日新聞明朝 ProN）
-     ロゴ: Futura PT
-     いずれも /fonts/ にライセンス済みの実ファイルを配置する想定の
-     プレースホルダーです。ファイル名は仮のため、実データに合わせて
-     差し替えてください。
   ========================================================= */
   @font-face {
     font-family: 'Mainichi Mincho ProN';
@@ -52,10 +47,6 @@
     --paprika-ink: #1A1A1A;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
- 
-    /* white area reserved for the logo at the very bottom of the
-       page — top/left/right are full-bleed red now, only the
-       bottom keeps a white mat. */
     --frame-bottom: clamp(28px, 6vw, 64px);
  
     /* fluid type scale */
@@ -77,58 +68,26 @@
   }
  
   body {
-    /* The page itself is white — the red only fills the poster box
-       inside .page, so a white "mat" frames it on every side. */
     background: var(--paprika-white);
     color: var(--paprika-green);
-    /* 本文: 毎日新聞明朝ProN を最優先。読み込めない環境向けに
-       システムの明朝体へフォールバックします。 */
     font-family: 'Mainichi Mincho ProN', 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
     position: relative;
   }
  
-  /* =========================================================
-     Stacking context map (for the future draw-to-unlock canvas)
-     -----------------------------------------------------------
-     0   body            white page background (only shows through
-                          behind the bottom logo area now — the
-                          poster is full-bleed on top/left/right)
-     1   .page > .hero   the red poster, flush with the top and
-                          both sides of the viewport
-     1   .site-logo      logo area directly below the poster, on a
-                          white strip reserved at the bottom
-     500 .canvas-layer   reserved: full-viewport transparent
-                          <canvas> that will sit ON TOP of
-                          everything below, capture pointer/touch
-                          drawing, and fade out once the guide
-                          shape is completed.
-  ========================================================= */
- 
-  /* -------- future overlay layer (inactive placeholder) --------
-     Left empty/hidden today. When the drawing interaction ships,
-     give this element the <canvas>, set pointer-events:auto, and
-     toggle [data-unlocked="true"] on <body> to fade/remove it.
-     Kept full-viewport so the future interaction can draw across
-     the white frame too, not just the red poster.
-  ---------------------------------------------------------------- */
   .canvas-layer {
     position: fixed;
     inset: 0;
     z-index: 500;
-    pointer-events: none; /* flip to "auto" once drawing is wired up */
-    display: none;        /* remove/replace with real <canvas> later */
+    pointer-events: none;
+    display: none;
   }
   body[data-unlocked="true"] .canvas-layer {
     opacity: 0;
     transition: opacity 0.8s ease;
   }
  
-  /* =========================================================
-     Page shell. Top/left/right are edge-to-edge now — only the
-     bottom keeps a white strip (padding) for the logo area.
-  ========================================================= */
   .page {
     position: relative;
     z-index: 1;
@@ -143,11 +102,6 @@
     padding: 0 0 calc(var(--frame-bottom) + var(--safe-bottom));
   }
  
-  /* =========================================================
-     The poster itself — red background, full-bleed to the top
-     and both sides of the viewport (no white margin around it
-     anymore). Only its bottom edge meets the white logo strip.
-  ========================================================= */
   .hero {
     position: relative;
     width: 100%;
@@ -162,10 +116,6 @@
  
   /* =========================================================
      Star circle (top)
-     Placeholder ring built from 16 CSS stars.
-     Swap this whole block for an inline SVG exported from
-     Illustrator when it's ready — keep the .star-circle
-     wrapper's size/position so layout doesn't shift.
   ========================================================= */
   .star-circle {
     --ring-size: clamp(220px, 34vw, 420px);
@@ -188,9 +138,6 @@
     height: clamp(20px, 3.6vw, 34px);
     margin: calc(clamp(20px, 3.6vw, 34px) / -2);
     color: var(--paprika-green);
-    /* each .star gets its own --i (0..15) set inline to place it
-       around the circle; see the generated <style> block below,
-       or the inline --i attributes on the markup. */
     transform:
       rotate(calc(360deg / 16 * var(--i)))
       translateY(calc(var(--ring-size) / -2))
@@ -203,11 +150,6 @@
     height: 100%;
     fill: currentColor;
     overflow: visible;
-    /* Italicize the star glyph itself (not its position on the ring):
-       this transform is local to each <svg>, applied *after* the
-       parent .star has already rotated/un-rotated itself upright, so
-       every star gets the same rightward slant regardless of where
-       it sits on the circle. */
     transform: skewX(-15deg);
     transform-origin: 50% 50%;
   }
@@ -223,7 +165,7 @@
   .tewo {
     font-size: var(--fs-tewo);
     letter-spacing: 0.5em;
-    text-indent: 0.5em; /* optically re-center the trailing tracking */
+    text-indent: 0.5em;
     color: var(--paprika-green-dim);
     margin: 0 0 clamp(20px, 4vh, 36px);
   }
@@ -241,21 +183,21 @@
   .cast-list li { white-space: nowrap; }
  
   /* =========================================================
-     Instagram QR code — unchanged from the previous version.
-     Swap the src for the final exported asset if needed.
+     Instagram QR code — Clickable
   ========================================================= */
   .qr-block {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin: 0 0 clamp(28px, 5vh, 44px);
+    text-decoration: none;
   }
  
   .qr-block img {
     display: block;
     width: clamp(88px, 12vw, 128px);
     height: auto;
-    border-radius: 14%; /* matches the source asset's rounded card */
+    border-radius: 14%; 
     margin-bottom: clamp(8px, 1.6vh, 14px);
   }
  
@@ -291,26 +233,6 @@
  
   /* =========================================================
      Department credit line — seamless infinite right-to-left
-     marquee.
-     -----------------------------------------------------------
-     Structure: an overflow-hidden viewport (.dept-line) containing
-     a flex track (.dept-line-track) made of TWO identical groups
-     (.dept-line-group), each holding several repeats of the text
-     laid out with no gap logic to get wrong. Animating the track
-     from translateX(0) to translateX(-50%) always scrolls exactly
-     one group's width — since both groups are identical, the
-     instant the animation "resets" is visually indistinguishable
-     from mid-loop, so there's no seam, stutter, or blank flash.
-     The only requirement for this to look right is that a single
-     group must be at least as wide as the viewport; the inline
-     script below clones extra repeats into both groups until that
-     holds true, so it stays seamless on any screen width (a very
-     wide desktop monitor included), and re-checks on resize.
- 
-     Positioning: this is the last thing inside .hero, with zero
-     margin below it and zero bottom padding on .hero itself, so
-     the band's bottom edge lands exactly on the poster's bottom
-     edge — directly above the white logo strip that follows.
   ========================================================= */
   .dept-line {
     width: 100%;
@@ -340,7 +262,7 @@
     font-weight: 700;
     font-size: var(--fs-dept);
     letter-spacing: 0.02em;
-    padding-right: 3em; /* breathing room between repeats */
+    padding-right: 3em; 
   }
  
   @keyframes dept-line-marquee {
@@ -356,14 +278,12 @@
       overflow-x: auto;
     }
     .dept-line-group[data-group="b"] {
-      display: none; /* avoid showing the duplicate when motion is off */
+      display: none; 
     }
   }
  
   /* =========================================================
-     Logo — now lives OUTSIDE the red poster, on the white frame
-     below it. Placeholder <img>, swap `src` for the final asset
-     (SVG preferred) when it's ready.
+     Logo
   ========================================================= */
   .site-logo {
     display: flex;
@@ -379,10 +299,6 @@
     max-width: 60vw;
   }
  
-  /* Text fallback shown via the <img onerror> handler below until the
-     real logo asset exists at /images/paprika-logo.svg. Remove once
-     the asset is in place (or leave as a safety net). Uses Futura PT
-     per the brand spec, in the same green as the rest of the page. */
   .site-logo .logo-fallback {
     display: none;
     font-family: 'Futura PT', 'Futura', 'Century Gothic', sans-serif;
@@ -401,12 +317,6 @@
 </head>
 <body>
  
-  <!-- ===================================================================
-       Reserved layer for the future "draw to unlock" canvas interaction.
-       Add <canvas id="unlock-canvas"></canvas> inside here and hook up
-       pointer events when that feature is built. Keep it as the LAST
-       element before </body> (or raise its z-index) so it stays on top.
-  =================================================================== -->
   <div class="canvas-layer" id="canvas-layer" aria-hidden="true">
     <!-- <canvas id="unlock-canvas"></canvas> -->
   </div>
@@ -415,7 +325,6 @@
  
     <main class="hero">
  
-      <!-- Star circle (placeholder ring; swap for Illustrator SVG later) -->
       <div class="star-circle" aria-hidden="true">
         <svg viewBox="0 0 24 24" style="position:absolute; width:0; height:0;">
           <symbol id="star-shape" viewBox="0 0 24 24">
@@ -462,14 +371,14 @@
         <li>山田球道</li>
       </ul>
  
-      <!-- Instagram QR code — unchanged, swap src for the final asset -->
-      <div class="qr-block">
+      <!-- Instagram QR code — Clickable -->
+      <a href="https://www.instagram.com/go_paprika/" target="_blank" rel="noopener noreferrer" class="qr-block">
         <img src="insta-qr.png" alt="Instagram @GO_PAPRIKA のQRコード">
         <p class="qr-caption">
           <span class="qr-handle">@GO_PAPRIKA</span>
           <span class="qr-label">Instagram</span>
         </p>
-      </div>
+      </a>
  
       <div class="info-block">
         <p>2027年1月</p>
@@ -493,13 +402,9 @@
  
     </main>
  
-    <!-- Logo — outside the red poster, sitting on the white frame -->
     <div class="site-logo">
-      <!-- Replace src with the final paprika logo (SVG recommended).
-           Until that file exists, onerror swaps in a Futura PT text
-           fallback instead of showing a broken-image icon. -->
       <img
-        src="paprika-logo.svg"
+        src="/images/paprika-logo.svg"
         alt="paprika"
         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
       >
@@ -509,14 +414,6 @@
   </div>
  
   <script>
-    // Defensive coverage check for the department-line marquee.
-    // The markup already ships 3 repeats per group (6 total), which
-    // is enough on most screens. This just tops that up on very wide
-    // viewports so a single group's width always reaches (and
-    // comfortably exceeds) the visible width — which is what makes
-    // the translateX(-50%) loop look perfectly seamless regardless
-    // of window size. It also keeps the scroll speed visually
-    // constant no matter how many repeats end up in each group.
     (function () {
       var track = document.getElementById('deptLineTrack');
       if (!track) return;
@@ -527,7 +424,7 @@
  
       var PX_PER_SECOND = 70;
       var MIN_DURATION = 12;
-      var SAFETY_MARGIN = 200; // px, extra buffer beyond the viewport
+      var SAFETY_MARGIN = 200;
  
       function ensureCoverage() {
         var viewportWidth = window.innerWidth;
@@ -557,4 +454,3 @@
  
 </body>
 </html>
- 
