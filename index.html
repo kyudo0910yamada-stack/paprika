@@ -1,50 +1,560 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>paprika</title>
-  <style>
-    /* 画面全体の設定 */
-    body {
-      background-color: #E60012; /* パプリカっぽい赤色 */
-      color: white;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      margin: 0;
-      height: 100vh; /* 画面の高さいっぱいに */
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden; /* スクロールバーを隠す */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>paprika | 多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</title>
+<meta name="description" content="多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作『paprika』特設サイト">
+ 
+<style>
+  /* =========================================================
+     Font face
+     本文: 毎日新聞明朝ProN（A P-OTF 毎日新聞明朝 ProN）
+     ロゴ: Futura PT
+     いずれも /fonts/ にライセンス済みの実ファイルを配置する想定の
+     プレースホルダーです。ファイル名は仮のため、実データに合わせて
+     差し替えてください。
+  ========================================================= */
+  @font-face {
+    font-family: 'Mainichi Mincho ProN';
+    src: url('/fonts/mainichi-mincho-pron-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Mainichi Mincho ProN';
+    src: url('/fonts/mainichi-mincho-pron-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Futura PT';
+    src: url('/fonts/futura-pt-book.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Futura PT';
+    src: url('/fonts/futura-pt-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+ 
+  :root {
+    --paprika-red: #E60012;
+    --paprika-white: #FFFFFF;
+    --paprika-green: #1E6B3C;
+    --paprika-green-dim: #3C8158;
+    --paprika-ink: #1A1A1A;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+ 
+    /* white area reserved for the logo at the very bottom of the
+       page — top/left/right are full-bleed red now, only the
+       bottom keeps a white mat. */
+    --frame-bottom: clamp(28px, 6vw, 64px);
+ 
+    /* fluid type scale */
+    --fs-tewo: clamp(11px, 1.6vw, 14px);
+    --fs-cast: clamp(11px, 1.8vw, 15px);
+    --fs-info: clamp(10px, 1.4vw, 13px);
+    --fs-dept: clamp(36px, 8.4vw, 68px);
+    --fs-logo: clamp(28px, 7vw, 56px);
+    --fs-qr-caption: clamp(10px, 1.6vw, 13px);
+  }
+ 
+  * { box-sizing: border-box; }
+ 
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+  }
+ 
+  body {
+    /* The page itself is white — the red only fills the poster box
+       inside .page, so a white "mat" frames it on every side. */
+    background: var(--paprika-white);
+    color: var(--paprika-green);
+    /* 本文: 毎日新聞明朝ProN を最優先。読み込めない環境向けに
+       システムの明朝体へフォールバックします。 */
+    font-family: 'Mainichi Mincho ProN', 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+ 
+  /* =========================================================
+     Stacking context map (for the future draw-to-unlock canvas)
+     -----------------------------------------------------------
+     0   body            white page background (only shows through
+                          behind the bottom logo area now — the
+                          poster is full-bleed on top/left/right)
+     1   .page > .hero   the red poster, flush with the top and
+                          both sides of the viewport
+     1   .site-logo      logo area directly below the poster, on a
+                          white strip reserved at the bottom
+     500 .canvas-layer   reserved: full-viewport transparent
+                          <canvas> that will sit ON TOP of
+                          everything below, capture pointer/touch
+                          drawing, and fade out once the guide
+                          shape is completed.
+  ========================================================= */
+ 
+  /* -------- future overlay layer (inactive placeholder) --------
+     Left empty/hidden today. When the drawing interaction ships,
+     give this element the <canvas>, set pointer-events:auto, and
+     toggle [data-unlocked="true"] on <body> to fade/remove it.
+     Kept full-viewport so the future interaction can draw across
+     the white frame too, not just the red poster.
+  ---------------------------------------------------------------- */
+  .canvas-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    pointer-events: none; /* flip to "auto" once drawing is wired up */
+    display: none;        /* remove/replace with real <canvas> later */
+  }
+  body[data-unlocked="true"] .canvas-layer {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+ 
+  /* =========================================================
+     Page shell. Top/left/right are edge-to-edge now — only the
+     bottom keeps a white strip (padding) for the logo area.
+  ========================================================= */
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0 0 calc(var(--frame-bottom) + var(--safe-bottom));
+  }
+ 
+  /* =========================================================
+     The poster itself — red background, full-bleed to the top
+     and both sides of the viewport (no white margin around it
+     anymore). Only its bottom edge meets the white logo strip.
+  ========================================================= */
+  .hero {
+    position: relative;
+    width: 100%;
+    background: var(--paprika-red);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: calc(clamp(36px, 8vh, 96px) + var(--safe-top)) 6vw 0;
+    text-align: center;
+  }
+ 
+  /* =========================================================
+     Star circle (top)
+     Placeholder ring built from 16 CSS stars.
+     Swap this whole block for an inline SVG exported from
+     Illustrator when it's ready — keep the .star-circle
+     wrapper's size/position so layout doesn't shift.
+  ========================================================= */
+  .star-circle {
+    --ring-size: clamp(220px, 34vw, 420px);
+    position: relative;
+    width: var(--ring-size);
+    height: var(--ring-size);
+    margin-bottom: clamp(48px, 9vh, 110px);
+    animation: rotate-ring 90s linear infinite;
+  }
+ 
+  @media (prefers-reduced-motion: reduce) {
+    .star-circle { animation: none; }
+  }
+ 
+  .star-circle .star {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(20px, 3.6vw, 34px);
+    height: clamp(20px, 3.6vw, 34px);
+    margin: calc(clamp(20px, 3.6vw, 34px) / -2);
+    color: var(--paprika-green);
+    /* each .star gets its own --i (0..15) set inline to place it
+       around the circle; see the generated <style> block below,
+       or the inline --i attributes on the markup. */
+    transform:
+      rotate(calc(360deg / 16 * var(--i)))
+      translateY(calc(var(--ring-size) / -2))
+      rotate(calc(-360deg / 16 * var(--i)));
+  }
+ 
+  .star-circle svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+    overflow: visible;
+    /* Italicize the star glyph itself (not its position on the ring):
+       this transform is local to each <svg>, applied *after* the
+       parent .star has already rotated/un-rotated itself upright, so
+       every star gets the same rightward slant regardless of where
+       it sits on the circle. */
+    transform: skewX(-15deg);
+    transform-origin: 50% 50%;
+  }
+ 
+  @keyframes rotate-ring {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+ 
+  /* =========================================================
+     Text block
+  ========================================================= */
+  .tewo {
+    font-size: var(--fs-tewo);
+    letter-spacing: 0.5em;
+    text-indent: 0.5em; /* optically re-center the trailing tracking */
+    color: var(--paprika-green-dim);
+    margin: 0 0 clamp(20px, 4vh, 36px);
+  }
+ 
+  .cast-list {
+    list-style: none;
+    margin: 0 0 clamp(36px, 6vh, 56px);
+    padding: 0;
+    font-size: var(--fs-cast);
+    line-height: 2.05;
+    letter-spacing: 0.08em;
+    color: var(--paprika-green);
+  }
+ 
+  .cast-list li { white-space: nowrap; }
+ 
+  /* =========================================================
+     Instagram QR code — unchanged from the previous version.
+     Swap the src for the final exported asset if needed.
+  ========================================================= */
+  .qr-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 0 clamp(28px, 5vh, 44px);
+  }
+ 
+  .qr-block img {
+    display: block;
+    width: clamp(88px, 12vw, 128px);
+    height: auto;
+    border-radius: 14%; /* matches the source asset's rounded card */
+    margin-bottom: clamp(8px, 1.6vh, 14px);
+  }
+ 
+  .qr-caption {
+    font-size: var(--fs-qr-caption);
+    line-height: 1.6;
+    letter-spacing: 0.03em;
+    color: var(--paprika-green);
+  }
+ 
+  .qr-caption .qr-handle {
+    display: block;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+ 
+  .qr-caption .qr-label {
+    display: block;
+    color: var(--paprika-green-dim);
+    font-size: 0.9em;
+    letter-spacing: 0.08em;
+  }
+ 
+  .info-block {
+    font-size: var(--fs-info);
+    line-height: 1.9;
+    letter-spacing: 0.04em;
+    color: var(--paprika-green-dim);
+    margin: 0 0 clamp(18px, 3vh, 28px);
+  }
+ 
+  .info-block p { margin: 0; }
+ 
+  /* =========================================================
+     Department credit line — seamless infinite right-to-left
+     marquee.
+     -----------------------------------------------------------
+     Structure: an overflow-hidden viewport (.dept-line) containing
+     a flex track (.dept-line-track) made of TWO identical groups
+     (.dept-line-group), each holding several repeats of the text
+     laid out with no gap logic to get wrong. Animating the track
+     from translateX(0) to translateX(-50%) always scrolls exactly
+     one group's width — since both groups are identical, the
+     instant the animation "resets" is visually indistinguishable
+     from mid-loop, so there's no seam, stutter, or blank flash.
+     The only requirement for this to look right is that a single
+     group must be at least as wide as the viewport; the inline
+     script below clones extra repeats into both groups until that
+     holds true, so it stays seamless on any screen width (a very
+     wide desktop monitor included), and re-checks on resize.
+ 
+     Positioning: this is the last thing inside .hero, with zero
+     margin below it and zero bottom padding on .hero itself, so
+     the band's bottom edge lands exactly on the poster's bottom
+     edge — directly above the white logo strip that follows.
+  ========================================================= */
+  .dept-line {
+    width: 100%;
+    margin: 0 calc(-1 * 6vw) 0;
+    padding: clamp(14px, 3vh, 26px) 0;
+    background: var(--paprika-red);
+    overflow: hidden;
+  }
+ 
+  .dept-line-track {
+    display: flex;
+    width: max-content;
+    animation: dept-line-marquee 28s linear infinite;
+    will-change: transform;
+  }
+ 
+  .dept-line-group {
+    display: flex;
+    flex: 0 0 auto;
+  }
+ 
+  .dept-line-track span {
+    flex: 0 0 auto;
+    display: inline-block;
+    white-space: nowrap;
+    color: var(--paprika-green);
+    font-weight: 700;
+    font-size: var(--fs-dept);
+    letter-spacing: 0.02em;
+    padding-right: 3em; /* breathing room between repeats */
+  }
+ 
+  @keyframes dept-line-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+ 
+  @media (prefers-reduced-motion: reduce) {
+    .dept-line-track {
+      animation: none;
     }
-
-    /* Coming Soonの文字の設定 */
-    h1 {
-      font-size: 3rem;
-      letter-spacing: 0.2em; /* 文字の間隔を少し広げる */
-      margin-bottom: 10px;
-      animation: fadeIn 2s ease-in-out; /* ふわっと表示されるアニメーション */
+    .dept-line {
+      overflow-x: auto;
     }
-
-    p {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      opacity: 0.8;
-      animation: fadeIn 3s ease-in-out;
+    .dept-line-group[data-group="b"] {
+      display: none; /* avoid showing the duplicate when motion is off */
     }
-
-    /* アニメーションの設計図 */
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+  }
+ 
+  /* =========================================================
+     Logo — now lives OUTSIDE the red poster, on the white frame
+     below it. Placeholder <img>, swap `src` for the final asset
+     (SVG preferred) when it's ready.
+  ========================================================= */
+  .site-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: clamp(20px, 5vh, 40px);
+  }
+ 
+  .site-logo img {
+    display: block;
+    height: var(--fs-logo);
+    width: auto;
+    max-width: 60vw;
+  }
+ 
+  /* Text fallback shown via the <img onerror> handler below until the
+     real logo asset exists at /images/paprika-logo.svg. Remove once
+     the asset is in place (or leave as a safety net). Uses Futura PT
+     per the brand spec, in the same green as the rest of the page. */
+  .site-logo .logo-fallback {
+    display: none;
+    font-family: 'Futura PT', 'Futura', 'Century Gothic', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: var(--fs-logo);
+    letter-spacing: 0.01em;
+    color: var(--paprika-green);
+  }
+ 
+  @media (max-width: 480px) {
+    .hero { padding-top: calc(clamp(28px, 7vh, 64px) + var(--safe-top)); }
+    .cast-list { line-height: 1.9; }
+  }
+</style>
 </head>
 <body>
-
-  <h1>COMING SOON</h1>
-  <p>paprika</p>
-
+ 
+  <!-- ===================================================================
+       Reserved layer for the future "draw to unlock" canvas interaction.
+       Add <canvas id="unlock-canvas"></canvas> inside here and hook up
+       pointer events when that feature is built. Keep it as the LAST
+       element before </body> (or raise its z-index) so it stays on top.
+  =================================================================== -->
+  <div class="canvas-layer" id="canvas-layer" aria-hidden="true">
+    <!-- <canvas id="unlock-canvas"></canvas> -->
+  </div>
+ 
+  <div class="page">
+ 
+    <main class="hero">
+ 
+      <!-- Star circle (placeholder ring; swap for Illustrator SVG later) -->
+      <div class="star-circle" aria-hidden="true">
+        <svg viewBox="0 0 24 24" style="position:absolute; width:0; height:0;">
+          <symbol id="star-shape" viewBox="0 0 24 24">
+            <path d="M12.0,0.5 L13.82,9.49 L22.94,8.45 L14.95,12.96 L18.76,21.3 L12.0,15.1 L5.24,21.3 L9.05,12.96 L1.06,8.45 L10.18,9.49 Z"/>
+          </symbol>
+        </svg>
+        <span class="star" style="--i:0;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:1;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:2;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:3;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:4;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:5;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:6;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:7;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:8;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:9;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:10;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:11;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:12;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:13;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:14;"><svg><use href="#star-shape"></use></svg></span>
+        <span class="star" style="--i:15;"><svg><use href="#star-shape"></use></svg></span>
+      </div>
+ 
+      <p class="tewo">TEWO</p>
+ 
+      <ul class="cast-list">
+        <li>飯塚小雪</li>
+        <li>加藤慎之介</li>
+        <li>髙槇さやか</li>
+        <li>小手川希生</li>
+        <li>サトウユウ</li>
+        <li>白幡大陽</li>
+        <li>髙山雅純</li>
+        <li>武田桜和</li>
+        <li>チョウキンジ</li>
+        <li>手島遊</li>
+        <li>苗代ヒロ</li>
+        <li>羽田妃伽</li>
+        <li>フジナミリーヤ</li>
+        <li>みのそうた</li>
+        <li>三輪しおりこ</li>
+        <li>諸江紫音</li>
+        <li>山田球道</li>
+      </ul>
+ 
+      <!-- Instagram QR code — unchanged, swap src for the final asset -->
+      <div class="qr-block">
+        <img src="/images/insta-qr.png" alt="Instagram @GO_PAPRIKA のQRコード">
+        <p class="qr-caption">
+          <span class="qr-handle">@GO_PAPRIKA</span>
+          <span class="qr-label">Instagram</span>
+        </p>
+      </div>
+ 
+      <div class="info-block">
+        <p>2027年1月</p>
+        <p>多摩美術大学 上野毛キャンパス内各所</p>
+      </div>
+ 
+      <div class="dept-line" role="text" aria-label="多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作">
+        <div class="dept-line-track" id="deptLineTrack" aria-hidden="true">
+          <div class="dept-line-group" data-group="a">
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+          </div>
+          <div class="dept-line-group" data-group="b">
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+            <span>多摩美術大学 演劇舞踊デザイン学科 2026年度卒業制作</span>
+          </div>
+        </div>
+      </div>
+ 
+    </main>
+ 
+    <!-- Logo — outside the red poster, sitting on the white frame -->
+    <div class="site-logo">
+      <!-- Replace src with the final paprika logo (SVG recommended).
+           Until that file exists, onerror swaps in a Futura PT text
+           fallback instead of showing a broken-image icon. -->
+      <img
+        src="/images/paprika-logo.svg"
+        alt="paprika"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+      >
+      <span class="logo-fallback" aria-hidden="true">paprika</span>
+    </div>
+ 
+  </div>
+ 
+  <script>
+    // Defensive coverage check for the department-line marquee.
+    // The markup already ships 3 repeats per group (6 total), which
+    // is enough on most screens. This just tops that up on very wide
+    // viewports so a single group's width always reaches (and
+    // comfortably exceeds) the visible width — which is what makes
+    // the translateX(-50%) loop look perfectly seamless regardless
+    // of window size. It also keeps the scroll speed visually
+    // constant no matter how many repeats end up in each group.
+    (function () {
+      var track = document.getElementById('deptLineTrack');
+      if (!track) return;
+ 
+      var groupA = track.querySelector('[data-group="a"]');
+      var groupB = track.querySelector('[data-group="b"]');
+      if (!groupA || !groupB) return;
+ 
+      var PX_PER_SECOND = 70;
+      var MIN_DURATION = 12;
+      var SAFETY_MARGIN = 200; // px, extra buffer beyond the viewport
+ 
+      function ensureCoverage() {
+        var viewportWidth = window.innerWidth;
+        var guard = 0;
+ 
+        while (groupA.scrollWidth < viewportWidth + SAFETY_MARGIN && guard < 40) {
+          var template = groupA.children[0];
+          if (!template) break;
+          groupA.appendChild(template.cloneNode(true));
+          groupB.appendChild(template.cloneNode(true));
+          guard++;
+        }
+ 
+        var duration = Math.max(MIN_DURATION, groupA.scrollWidth / PX_PER_SECOND);
+        track.style.animationDuration = duration + 's';
+      }
+ 
+      ensureCoverage();
+ 
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(ensureCoverage, 200);
+      });
+    })();
+  </script>
+ 
 </body>
 </html>
+ 
